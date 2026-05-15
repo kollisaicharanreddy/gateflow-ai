@@ -1,0 +1,66 @@
+version: "3.9"
+
+services:
+
+  backend:
+    build:
+      context: ./gateflow-ai-Backend/gateflow-backend
+    container_name: gateflow-backend
+    restart: unless-stopped
+    env_file: ./gateflow-ai-Backend/gateflow-backend/.env.production
+    ports:
+      - "8000:8000"
+    networks:
+      - gateflow
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  rag:
+    build:
+      context: ./gateflow-ai-RAG/GateFlow-rag
+    container_name: gateflow-rag
+    restart: unless-stopped
+    env_file: ./gateflow-ai-RAG/GateFlow-rag/.env.production
+    ports:
+      - "8001:8001"
+    volumes:
+      # ChromaDB vector store — persists across container restarts
+      - rag_db:/app/gateflow_db
+    networks:
+      - gateflow
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  frontend:
+    build:
+      context: ./gateflow-ai-Frontend
+      args:
+        VITE_API_BASE_URL: http://40.192.99.242:8000
+        VITE_RAG_BASE_URL: http://40.192.99.242:8001
+        VITE_WS_BASE_URL: ws://40.192.99.242:8000
+        VITE_APP_ENV: production
+        VITE_MOCK_MODE: "false"
+    container_name: gateflow-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    networks:
+      - gateflow
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  rag_db:
+
+networks:
+  gateflow:
+    driver: bridge

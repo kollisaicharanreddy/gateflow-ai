@@ -59,6 +59,12 @@ class Settings(BaseSettings):
     # RAG microservice base URL (no trailing slash)
     RAG_BASE_URL: str = "http://localhost:8001"
 
+    # AWS S3 — file storage (replaces local uploads/ folder)
+    AWS_ACCESS_KEY_ID: str = ""
+    AWS_SECRET_ACCESS_KEY: str = ""
+    AWS_REGION: str = "ap-south-2"
+    S3_BUCKET_NAME: str = "gateflow-uploads"
+
     # Error Tracking (future)
     SENTRY_DSN: str = ""
 

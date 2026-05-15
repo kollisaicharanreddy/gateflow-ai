@@ -9,7 +9,6 @@ Walk-in flow:
 All QR scanning uses the SAME existing invite/entry flow — no new pipeline.
 """
 import os
-import shutil
 import uuid
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
@@ -32,8 +31,9 @@ from schemas.walkin import (
 from services.invite_service import generate_invite_token, generate_qr_token, _link
 from services.space_service import ensure_space_access
 from utils.logger import logger
+from utils.s3 import upload_file, presigned_url
 
-_PROOF_DIR = "uploads/walkin"
+_PROOF_FOLDER = "walkin"
 
 
 # ── Internal helpers ──────────────────────────────────────────────────────────
@@ -42,7 +42,10 @@ def _to_resp(req: WalkInRequest) -> WalkInResponse:
     return WalkInResponse(
         id=req.id, space_id=req.space_id, requested_by=req.requested_by,
         visitor_name=req.visitor_name, visitor_phone=req.visitor_phone,
-        reason=req.reason, proof_image=req.proof_image, status=req.status,
+        reason=req.reason,
+        # Convert S3 key → presigned URL so frontend can display the image
+        proof_image=presigned_url(req.proof_image) if req.proof_image else None,
+        status=req.status,
         rejected_note=req.rejected_note, invite_id=req.invite_id,
         created_at=req.created_at, updated_at=req.updated_at,
     )
@@ -67,14 +70,9 @@ async def _get_walkin(db: AsyncSession, walkin_id: UUID) -> WalkInRequest:
 
 
 def _save_proof_image(file: UploadFile) -> str:
-    """Save uploaded proof image to disk. Returns the saved file path."""
-    os.makedirs(_PROOF_DIR, exist_ok=True)
-    ext = os.path.splitext(file.filename or "")[1] or ".jpg"
-    filename = f"{uuid.uuid4().hex}{ext}"
-    path = os.path.join(_PROOF_DIR, filename)
-    with open(path, "wb") as out:
-        shutil.copyfileobj(file.file, out)
-    return path
+    """Upload proof image to S3. Returns the S3 key."""
+    content = file.file.read()
+    return upload_file(content, _PROOF_FOLDER, file.filename or "proof.jpg")
 
 
 # ── Public service functions ──────────────────────────────────────────────────

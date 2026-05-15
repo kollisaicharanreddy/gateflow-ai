@@ -12,7 +12,6 @@ from uuid import UUID
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from fastapi.staticfiles import StaticFiles
 from slowapi.errors import RateLimitExceeded
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
@@ -140,12 +139,6 @@ app.include_router(overstay_router,     prefix="/overstay",      tags=["Overstay
 app.include_router(notification_router, prefix="/notifications", tags=["Notifications"])
 app.include_router(document_router,     prefix="/documents",     tags=["Documents"])
 app.include_router(chat_router,         prefix="/chat",          tags=["Chat"])
-
-# ── Static uploads (documents, walk-in proofs) ─────────────────────────────────
-os.makedirs("uploads", exist_ok=True)
-os.makedirs("uploads/documents", exist_ok=True)
-os.makedirs("uploads/walkin", exist_ok=True)
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 
 # ── WebSocket ──────────────────────────────────────────────────────────────────

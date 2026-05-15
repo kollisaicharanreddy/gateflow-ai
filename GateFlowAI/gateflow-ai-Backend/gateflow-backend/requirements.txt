@@ -38,6 +38,9 @@ apscheduler==3.10.4
 qrcode[pil]==8.2
 pillow==12.2.0
 
+# AWS S3
+boto3==1.38.23
+
 # Testing
 pytest==9.0.3
 pytest-asyncio==1.3.0

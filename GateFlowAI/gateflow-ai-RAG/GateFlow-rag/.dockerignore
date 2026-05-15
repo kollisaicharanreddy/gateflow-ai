@@ -1,0 +1,14 @@
+.venv/
+venv/
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+.env
+.env.production
+.pytest_cache/
+gateflow_db/
+logs/
+*.log
+.git/
+.gitignore
